@@ -27,7 +27,7 @@ async function loadCsv(){
                   }else{
                       data.Rating = null;
                   }
-
+                  //data._id = parseFloat(data._id)
                   //console.log(data)
                   //console.log(data);
                   results.push(data)

@@ -13,32 +13,48 @@ app.use(cors());
 //Populate DB
 mongo.populateMongoDB();
 
-
 app.get('/courses', function (req,res) {
-    console.log('/courses')
-    return mongo.findAll(req,res);
+    res.setHeader('Content-Type', 'application/json');
+    if(req.query.hasOwnProperty("rating")){
+        return mongo.findCoursesWithRating(req,res);
+    }else if(req.query.hasOwnProperty("tag")){
+        return mongo.findCoursesWithTag(req,res);
+    }else if(req.query.hasOwnProperty("difficulty")){
+        return mongo.findCoursesWithDifficulty(req,res);
+    }else{
+        return mongo.findAll(req,res);
+    }
 });
 
-//  req.query.params: rating
-app.get('/courses/rating', function (req,res) {
-    console.log('/courses/rating')
-    return mongo.findRatingAbove(req,res);
-});
-
-app.get('/courses/tag', function (req,res) {
-    console.log('/courses/tag')
-    return mongo.findCoursesWithTag(req,res);
-});
-//  req.query.params: difficulty
-app.get('/courses/level', function (req,res) {
-    console.log('/courses/level')
-    return mongo.findCoursesWithLevel(req,res);
+app.get('/courses/tags/top10', function (req,res) {
+    console.log('/courses/tags')
+    res.setHeader('Content-Type', 'application/json');
+    return mongo.findCountOfTags(req,res);
 });
 
 // NEEDS TO BE LAST OTHERWISE THE CALLS ALWAYS POINT AT THIS
 app.get('/courses/:id', function (req,res) {
     console.log('/courses/:id')
+    res.setHeader('Content-Type', 'application/json');
     return mongo.findById(req,res);
+});
+
+app.delete('/courses/:id', function (req,res) {
+    console.log('/courses/:id')
+    res.setHeader('Content-Type', 'application/json');
+    return mongo.deleteById(req,res);
+});
+
+app.put('/courses/:id', function (req,res) {
+    console.log('PUT /courses/:id')
+    res.setHeader('Content-Type', 'application/json');
+    return mongo.updateById(req,res);
+});
+
+app.post('/courses', function (req,res) {
+    console.log('POST /courses/')
+    res.setHeader('Content-Type', 'application/json');
+    return mongo.addDocument(req,res);
 });
 
 const server = app.listen(port, () => console.log(`MongoDB API ready and listening at http://localhost:${port}`))

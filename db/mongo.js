@@ -2,13 +2,12 @@ const { MongoClient, ObjectID, Logger } = require('mongodb');
 const ownLogger = require("./logger");
 
 var mongoClient = MongoClient(
-    "mongodb://admin:password@localhost:27017/coursera",
-    { useUnifiedTopology: true, loggerLevel: 'info'}
+    "mongodb://admin:password@localhost:27017/",
+    { useUnifiedTopology: true, loggerLevel: 'error'}
 );
 
 var csvParser = require("./csv_converter");
 mongoClient.connect().then( (client) => {
-    client.db().collection('courses');
     console.log("MongoDB connection fully alive")
 }).catch((e) => {
     console.log("ERROR: " + e);
@@ -85,8 +84,6 @@ async function findAll(req, res) {
     var db = mongoClient.db("coursera");
     var collection = db.collection("courses");
     let result = await collection.find();
-    console.log(res)
-    //ownLogger.log('info',createLogJson(req,res));
     return res.send(JSON.stringify(await result.toArray()));
 }
 
@@ -98,14 +95,17 @@ async function findCoursesWithRating(req, res) {
     if (req.query.rating.includes("<")) {
         compareRating = req.query.rating.replace("<", "").replace(",", ".");
         comparator = false;
-    } else {
+    } else if(req.query.rating.includes(">")){
         compareRating = req.query.rating.replace(">", "").replace(",", ".");
         comparator = true;
+    } else {
+
     }
-    var compareRatingFloat = Number(compareRating);
+
+    var compareRatingFloat = parseFloat(compareRating);
     var db = mongoClient.db("coursera");
     var collection = db.collection("courses");
-    let resultCursor
+    let resultCursor;
     try {
         if (comparator) {
             resultCursor = await collection.find({ Rating: { $gt: compareRatingFloat } })

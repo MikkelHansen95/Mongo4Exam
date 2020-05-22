@@ -15,7 +15,7 @@ app.use(cors());
 //Populate DB
 mongo.populateMongoDB();
 
-app.get('/courses', (req,res,next) => { logger.log('info',createLogJsonReq(req)); next(); }, function (req,res) {
+app.get('/courses', function (req,res) {
     //console.log(req)
     res.setHeader('Content-Type', 'application/json');
     if(req.query.hasOwnProperty("rating")){
@@ -29,32 +29,32 @@ app.get('/courses', (req,res,next) => { logger.log('info',createLogJsonReq(req))
     }
 });
 
-app.get('/courses/tags/top10', (req,res,next) => { logger.log('info',createLogJsonReq(req)); next(); }, function (req,res) {
+app.get('/courses/tags/top10', function (req,res) {
     console.log('/courses/tags')
     res.setHeader('Content-Type', 'application/json');
     return mongo.findCountOfTags(req,res);
 });
 
 // NEEDS TO BE LAST OTHERWISE THE CALLS ALWAYS POINT AT THIS
-app.get('/courses/:id', (req,res,next) => { logger.log('info',createLogJsonReq(req)); next(); }, function (req,res) {
+app.get('/courses/:id', function (req,res) {
     console.log('/courses/:id')
     res.setHeader('Content-Type', 'application/json');
     return mongo.findById(req,res);
 });
 
-app.delete('/courses/:id', (req,res,next) => { logger.log('info',createLogJsonReq(req)); next(); },function (req,res) {
+app.delete('/courses/:id',function (req,res) {
     console.log('/courses/:id')
     res.setHeader('Content-Type', 'application/json');
     return mongo.deleteById(req,res);
 });
 
-app.put('/courses/:id', (req,res,next) => { logger.log('info',createLogJsonReq(req)); next(); }, function (req,res) {
+app.put('/courses/:id', function (req,res) {
     console.log('PUT /courses/:id')
     res.setHeader('Content-Type', 'application/json');
     return mongo.updateById(req,res);
 });
 
-app.post('/courses', (req,res,next) => { logger.log('info',createLogJsonReq(req)); next(); }, function (req,res) {
+app.post('/courses', function (req,res) {
     console.log('POST /courses/')
     res.setHeader('Content-Type', 'application/json');
     return mongo.addDocument(req,res);

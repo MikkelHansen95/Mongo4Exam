@@ -4,7 +4,7 @@ require('winston-mongodb');
 const logger = createLogger({
     transports: [
         new transports.MongoDB({
-            level: 'info',
+            level: 'error',
             db: "mongodb://admin:password@localhost:27017/",
             options: {useUnifiedTopology: true },
             collection: "courses_log",

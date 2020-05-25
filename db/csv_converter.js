@@ -22,10 +22,13 @@ async function loadCsv(){
                     })
                     data.Tags = myfinalArray;
                   }
-                  if(data.Rating != "None"){
-                    data.Rating = parseFloat(data.Rating)
+                  if(data.Price != "None"){
+                    data.Price = parseFloat(data.Price) * 40
                   }else{
-                      data.Rating = null;
+                      data.Price = 0
+                  }
+                  if(data.Level == "None"){
+                    data.Level = 'All Levels'
                   }
                   //data._id = parseFloat(data._id)
                   //console.log(data)

@@ -24,11 +24,15 @@ async function findById(req, res) {
     let id = req.params.id;
     var db = mongoClient.db("coursera");
     var collection = db.collection("courses");
-    let result = await collection.findOne({
+    let result = await collection.find({
         _id: id
-    }, {});
-    logger.log('info', {req,res});
-    return res.send(JSON.stringify(result));
+    }, {}).toArray();
+    console.log(result)
+    if(result.length > 0){
+        return res.send(JSON.stringify(result[0]));
+    }else{
+        return res.status(404).send({});
+    }
 }
 
 async function deleteById(req, res) {
@@ -38,7 +42,6 @@ async function deleteById(req, res) {
     let result = await collection.findOneAndDelete({
         _id: id
     }, {});
-    console.log(result);
     return res.status(200).send(JSON.stringify({ message: "Successful deleted" }));
 }
 
@@ -53,7 +56,6 @@ async function updateById(req, res) {
     }, {
         $set: body
     }, {});
-    console.log(result)
     return res.send(JSON.stringify(result));
 }
 
@@ -69,7 +71,7 @@ async function addDocument(req, res) {
     try {
         let cursor = await collection.insertOne(body)
         console.log(cursor)
-        return res.send(JSON.stringify(cursor.ops[0]));
+        return res.status(201).send(JSON.stringify(cursor.ops[0]));
     } catch (e) {
         console.log(e.code);
         if (e.code == 11000) {
@@ -88,33 +90,33 @@ async function findAll(req, res) {
 }
 
 
-async function findCoursesWithRating(req, res) {
-    console.log('/courses?rating')
-    let compareRating;
+async function findCoursesWithPrice(req, res) {
+    //console.log('/courses?price')
+    let comparePrice;
     let comparator;
-    if (req.query.rating.includes("<")) {
-        compareRating = req.query.rating.replace("<", "").replace(",", ".");
+    if (req.query.price.includes("<")) {
+        comparePrice = req.query.price.replace("<", "").replace(",", ".");
         comparator = false;
-    } else if(req.query.rating.includes(">")){
-        compareRating = req.query.rating.replace(">", "").replace(",", ".");
+    } else if(req.query.price.includes(">")){
+        comparePrice = req.query.price.replace(">", "").replace(",", ".");
         comparator = true;
     } else {
 
     }
 
-    var compareRatingFloat = parseFloat(compareRating);
+    var comparePriceFloat = parseFloat(comparePrice);
     var db = mongoClient.db("coursera");
     var collection = db.collection("courses");
     let resultCursor;
     try {
         if (comparator) {
-            resultCursor = await collection.find({ Rating: { $gt: compareRatingFloat } })
+            resultCursor = await collection.find({ Price: { $gt: comparePriceFloat } })
         } else {
-            resultCursor = await collection.find({ Rating: { $lt: compareRatingFloat } })
+            resultCursor = await collection.find({ Price: { $lt: comparePriceFloat } })
         }
         let result = await resultCursor.toArray();
         result.sort((a, b) => {
-            return b.Rating - a.Rating;
+            return b.Price - a.Price;
         })
         return res.send(JSON.stringify(await result));
     } catch (e) {
@@ -134,11 +136,11 @@ async function findCoursesWithTag(req, res) {
     return res.send(JSON.stringify(await resu));
 }
 
-async function findCoursesWithDifficulty(req, res) {
-    let level = req.query.difficulty;
+async function findCoursesWithLevel(req, res) {
+    let level = req.query.level;
     var db = mongoClient.db("coursera");
     var collection = db.collection("courses");
-    let result = await collection.find({ Difficulty: level });
+    let result = await collection.find({ Level: level });
     let resu = await result.toArray();
     console.log(await resu.length)
     return res.send(JSON.stringify(await resu));
@@ -189,10 +191,10 @@ module.exports = {
     findById: findById,
     findAll: findAll,
     findCoursesWithTag: findCoursesWithTag,
-    findCoursesWithDifficulty: findCoursesWithDifficulty,
+    findCoursesWithLevel: findCoursesWithLevel,
     deleteById: deleteById,
     updateById: updateById,
     addDocument: addDocument,
     findCountOfTags: findCountOfTags,
-    findCoursesWithRating: findCoursesWithRating
+    findCoursesWithPrice: findCoursesWithPrice
 };

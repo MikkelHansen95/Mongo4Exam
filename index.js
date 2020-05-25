@@ -17,13 +17,14 @@ mongo.populateMongoDB();
 
 app.get('/courses', function (req,res) {
     //console.log(req)
+    console.log(req.query)
     res.setHeader('Content-Type', 'application/json');
-    if(req.query.hasOwnProperty("rating")){
-        return mongo.findCoursesWithRating(req,res);
+    if(req.query.hasOwnProperty("price")){
+        return mongo.findCoursesWithPrice(req,res);
     }else if(req.query.hasOwnProperty("tag")){
         return mongo.findCoursesWithTag(req,res);
-    }else if(req.query.hasOwnProperty("difficulty")){
-        return mongo.findCoursesWithDifficulty(req,res);
+    }else if(req.query.hasOwnProperty("level")){
+        return mongo.findCoursesWithLevel(req,res);
     }else{
         return mongo.findAll(req,res);
     }
@@ -54,7 +55,7 @@ app.put('/courses/:id', function (req,res) {
     return mongo.updateById(req,res);
 });
 
-app.post('/courses', function (req,res) {
+app.post('/courses/', function (req,res) {
     console.log('POST /courses/')
     res.setHeader('Content-Type', 'application/json');
     return mongo.addDocument(req,res);

@@ -4,8 +4,6 @@ var cors = require('cors');
 const app = express()
 const port = 3000
 var mongo = require("./db/mongo");
-var logger = require("./db/logger");
-
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
@@ -13,12 +11,18 @@ app.use(cors());
 
 //INIT MONGODB IF not existing
 //Populate DB
-mongo.populateMongoDB();
+try{
+    mongo.populateMongoDB();
+}catch (e){
+    console.log(e)
+}
+
 
 app.get('/courses', function (req,res) {
     //console.log(req)
-    console.log(req.query)
     res.setHeader('Content-Type', 'application/json');
+    return mongo.findCoursesWithParams(req,res);
+    /*
     if(req.query.hasOwnProperty("price")){
         return mongo.findCoursesWithPrice(req,res);
     }else if(req.query.hasOwnProperty("tag")){
@@ -28,6 +32,7 @@ app.get('/courses', function (req,res) {
     }else{
         return mongo.findAll(req,res);
     }
+    */
 });
 
 app.get('/courses/tags/top10', function (req,res) {

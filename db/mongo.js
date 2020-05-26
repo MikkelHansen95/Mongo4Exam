@@ -1,62 +1,89 @@
 const { MongoClient, ObjectID, Logger } = require('mongodb');
-const ownLogger = require("./logger");
+const assert = require('assert');
 
 var mongoClient = MongoClient(
     "mongodb://admin:password@localhost:27017/",
-    { useUnifiedTopology: true, loggerLevel: 'error'}
+    { useUnifiedTopology: true, useNewUrlParser: true }
 );
 
 var csvParser = require("./csv_converter");
-mongoClient.connect().then( (client) => {
+
+mongoClient.connect().then((client) => {
     console.log("MongoDB connection fully alive")
 }).catch((e) => {
     console.log("ERROR: " + e);
 })
 
+
 async function populateMongoDB() {
-    var db = mongoClient.db("coursera");
-    var collection = db.collection("courses");
-    let results = csvParser.loadCsv();
-    collection.insertMany(await results, function (err, resultDocuments) { console.log("Done populating DB") });
+    try {
+        var db = mongoClient.db("coursera");
+        var collection = db.collection("courses");
+        let results = csvParser.loadCsv();
+        collection.insertMany(await results, function (err, resultDocuments) { console.log("Done populating DB") });
+    } catch (e) {
+        return e;
+    }
 }
 
 async function findById(req, res) {
-    let id = req.params.id;
-    var db = mongoClient.db("coursera");
-    var collection = db.collection("courses");
-    let result = await collection.find({
-        _id: id
-    }, {}).toArray();
-    console.log(result)
-    if(result.length > 0){
-        return res.send(JSON.stringify(result[0]));
-    }else{
-        return res.status(404).send({});
+    try {
+        let id = req.params.id;
+        var db = mongoClient.db("coursera");
+        var collection = db.collection("courses");
+        let result = await collection.find({
+            _id: id
+        }, {}).toArray();
+        
+        if (result.length > 0) {
+            return res.send(JSON.stringify(result[0]));
+        } else {
+            return res.status(404).send(JSON.stringify({ message: "No Course with requested id" }));
+        }
+    } catch (e) {
+        console.log(e)
+        return res.status(500).send();
     }
 }
 
 async function deleteById(req, res) {
-    let id = req.params.id;
-    var db = mongoClient.db("coursera");
-    var collection = db.collection("courses");
-    let result = await collection.findOneAndDelete({
-        _id: id
-    }, {});
-    return res.status(200).send(JSON.stringify({ message: "Successful deleted" }));
+    try{
+        let id = req.params.id;
+        var db = mongoClient.db("coursera");
+        var collection = db.collection("courses");
+        let result = await collection.findOneAndDelete({
+            _id: id
+        }, {});
+        if(result.value == null){
+            return res.status(404).send(JSON.stringify({ message: "No Course with requested id" }))
+        }else{
+            return res.status(200).send(JSON.stringify({ message: "Successful deleted" }))
+        }
+    }catch(e){
+        return res.status(500).send();
+    }
 }
 
 async function updateById(req, res) {
-    let id = req.params.id;
-    let body = req.body;
-    console.log(body)
-    var db = mongoClient.db("coursera");
-    var collection = db.collection("courses");
-    let result = await collection.findOneAndUpdate({
-        _id: id
-    }, {
-        $set: body
-    }, {});
-    return res.send(JSON.stringify(result));
+    try {
+        let id = req.params.id;
+        let body = req.body;
+        var db = mongoClient.db("coursera");
+        var collection = db.collection("courses");
+        let result = await collection.findOneAndUpdate({
+            _id: id
+        }, {
+            $set: body
+        }, { returnOriginal: false } );
+        if(await result.value == null){
+            return res.status(404).send( JSON.stringify({message: "No Course with requested id" }))
+        }else{
+            return res.status(200).send(JSON.stringify(result.value));
+        }
+    } catch (e) {
+        console.log(e)
+        return res.status(404).send()
+    }
 }
 
 async function addDocument(req, res) {
@@ -71,7 +98,7 @@ async function addDocument(req, res) {
     try {
         let cursor = await collection.insertOne(body)
         console.log(cursor)
-        return res.status(201).send(JSON.stringify(cursor.ops[0]));
+        return res.status(201).send(JSON.stringify(await cursor.ops[0]));
     } catch (e) {
         console.log(e.code);
         if (e.code == 11000) {
@@ -83,10 +110,65 @@ async function addDocument(req, res) {
 }
 
 async function findAll(req, res) {
-    var db = mongoClient.db("coursera");
-    var collection = db.collection("courses");
-    let result = await collection.find();
-    return res.send(JSON.stringify(await result.toArray()));
+    try{
+        var db = mongoClient.db("coursera");
+        var collection = db.collection("courses");
+        let result = await collection.find();
+        return res.send(JSON.stringify(await result.toArray()));
+    }catch(e){
+        return res.status(500).send({message: "Server Error"})
+    }
+}
+
+async function findCoursesWithParams(req,res){
+    try{
+        var mongo_operator_price = '$ne';
+        var mongo_operator_tag = '$ne';
+        var mongo_operator_level= '$ne';
+        var price = -1
+        var tags = []
+        var level = ""
+    
+        if(req.query.price != undefined){
+            if(req.query.operator == "lessThan"){
+                mongo_operator_price = '$lt'
+            }else if (req.query.operator == "greaterThan"){
+                mongo_operator_price = '$gt'
+            }else{
+                mongo_operator_price = '$eq'
+            }
+            price = parseInt(req.query.price)
+        }
+    
+        if(req.query.tags != undefined){
+            console.log(req.query.tags)
+            let arr = req.query.tags.split(",");
+            //console.log(arr)
+            arr.forEach(element => {
+                //console.log(element)
+                tags.push(element)
+            });
+            mongo_operator_tag = '$all'
+            console.log(tags)
+        }
+    
+        if(req.query.level != undefined){
+            level = req.query.level;
+            mongo_operator_level = '$eq';
+        }
+        console.log(   mongo_operator_price + ": " +  price , mongo_operator_tag + ": " + tags.toString()  ,  mongo_operator_level+ ": " + level  )
+        //let query = "{ $and: [ { price: { " + mongo_operator_price + ":" + 
+        var db = mongoClient.db("coursera");
+        var collection = db.collection("courses");
+        let resultCursor = await collection.find({ $and: [ { price: { [mongo_operator_price]: price } }, { tags: { [mongo_operator_tag]: tags }  }, { level: { [mongo_operator_level]: level } } ] });
+        console.log(await JSON.stringify(resultCursor.cursorState.cmd.query) )
+        console.log(await resultCursor.cursorState.cmd.query)
+        let result = await resultCursor.toArray();
+        return res.send(await result);
+
+    }catch(e){
+        console.log(e)
+    }
 }
 
 
@@ -97,11 +179,9 @@ async function findCoursesWithPrice(req, res) {
     if (req.query.price.includes("<")) {
         comparePrice = req.query.price.replace("<", "").replace(",", ".");
         comparator = false;
-    } else if(req.query.price.includes(">")){
+    } else if (req.query.price.includes(">")) {
         comparePrice = req.query.price.replace(">", "").replace(",", ".");
         comparator = true;
-    } else {
-
     }
 
     var comparePriceFloat = parseFloat(comparePrice);
@@ -110,19 +190,18 @@ async function findCoursesWithPrice(req, res) {
     let resultCursor;
     try {
         if (comparator) {
-            resultCursor = await collection.find({ Price: { $gt: comparePriceFloat } })
+            resultCursor = await collection.find({ price: { $gt: comparePriceFloat } })
         } else {
-            resultCursor = await collection.find({ Price: { $lt: comparePriceFloat } })
+            resultCursor = await collection.find({ price: { $lt: comparePriceFloat } })
         }
         let result = await resultCursor.toArray();
         result.sort((a, b) => {
-            return b.Price - a.Price;
+            return b.price - a.price;
         })
         return res.send(JSON.stringify(await result));
     } catch (e) {
         return res.status(500).send({ message: "Error try again" });
     }
-
 }
 
 async function findCoursesWithTag(req, res) {
@@ -171,7 +250,7 @@ async function findCountOfTags(req, res) {
     return res.send(JSON.stringify(await result.slice(0, 10)));
 }
 
-function createLogJson(req,res){
+function createLogJson(req, res) {
     let request = {
         headers: req.headers,
         path: req.route.methods + " - " + req.route.path,
@@ -196,5 +275,6 @@ module.exports = {
     updateById: updateById,
     addDocument: addDocument,
     findCountOfTags: findCountOfTags,
-    findCoursesWithPrice: findCoursesWithPrice
+    findCoursesWithPrice: findCoursesWithPrice,
+    findCoursesWithParams: findCoursesWithParams
 };

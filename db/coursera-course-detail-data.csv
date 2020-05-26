@@ -1,4 +1,4 @@
-_id;Name;Url;Price;Level;Tags
+_id;name;url;price;level;tags
 0;"""Making"" Progress Teach-Out";https://coursera.org/learn/makingprogress;None;Beginner Level;['Social Sciences', 'Governance and Society']
 1;(Business Writing) الكتابة في مجال الأعمال;https://coursera.org/learn/writing-for-business-ar;None;Beginner Level;['Business', 'Business Essentials']
 2;(Giving Helpful Feedback) إعطاء الملاحظات المفيدة;https://coursera.org/learn/feedback-ar;4.8;None;['Business', 'Business Essentials']

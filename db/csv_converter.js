@@ -7,12 +7,12 @@ async function loadCsv(){
             fs.createReadStream("db/coursera-course-detail-data.csv", {encoding: 'UTF-8'})
               .pipe(csv({separator: ';' }))
               .on("data", (data) => {
-                  if(data.Tags == "None"){
+                  if(data.tags == "None"){
                       data.Tags = [];
                   }else{
                     //console.log(data.Tags);
                     //data.Tags.replace("'[","");
-                    let arr = data.Tags.split(",");
+                    let arr = data.tags.split(",");
                     let myfinalArray = [];
                     arr.forEach( (tag) => {
                         let string = tag.replace("[","").replace("]","");
@@ -20,15 +20,15 @@ async function loadCsv(){
                         let trimmedString = finalString.trim();
                         myfinalArray.push(trimmedString)
                     })
-                    data.Tags = myfinalArray;
+                    data.tags = myfinalArray;
                   }
-                  if(data.Price != "None"){
-                    data.Price = parseFloat(data.Price) * 40
+                  if(data.price != "None"){
+                    data.price = parseFloat(data.price) * 40
                   }else{
-                      data.Price = 0
+                      data.price = 0
                   }
-                  if(data.Level == "None"){
-                    data.Level = 'All Levels'
+                  if(data.level == "None"){
+                    data.level = 'All Levels'
                   }
                   //data._id = parseFloat(data._id)
                   //console.log(data)

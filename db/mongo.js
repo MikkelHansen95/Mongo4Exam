@@ -127,7 +127,7 @@ async function findCoursesWithParams(req,res){
         var mongo_operator_level= '$ne';
         var price = -1
         var tags = []
-        var level = ""
+        var level = []
     
         if(req.query.price != undefined){
             if(req.query.operator == "lessThan"){
@@ -143,9 +143,7 @@ async function findCoursesWithParams(req,res){
         if(req.query.tags != undefined){
             console.log(req.query.tags)
             let arr = req.query.tags.split(",");
-            //console.log(arr)
             arr.forEach(element => {
-                //console.log(element)
                 tags.push(element)
             });
             mongo_operator_tag = '$all'
@@ -153,11 +151,14 @@ async function findCoursesWithParams(req,res){
         }
     
         if(req.query.level != undefined){
-            level = req.query.level;
-            mongo_operator_level = '$eq';
+            let arr = req.query.level.split(",");
+            arr.forEach(element => {
+                level.push(element)
+            });
+            mongo_operator_level = '$in';
         }
-        console.log(   mongo_operator_price + ": " +  price , mongo_operator_tag + ": " + tags.toString()  ,  mongo_operator_level+ ": " + level  )
-        //let query = "{ $and: [ { price: { " + mongo_operator_price + ":" + 
+        //GET QUERY FOR TESTING IN MONGO ATLAS
+        //console.log(   mongo_operator_price + ": " +  price , mongo_operator_tag + ": " + tags.toString()  ,  mongo_operator_level+ ": " + level  )
         var db = mongoClient.db("coursera");
         var collection = db.collection("courses");
         let resultCursor = await collection.find({ $and: [ { price: { [mongo_operator_price]: price } }, { tags: { [mongo_operator_tag]: tags }  }, { level: { [mongo_operator_level]: level } } ] });
